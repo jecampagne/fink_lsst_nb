@@ -26,18 +26,12 @@ construite sur [Aladin Lite v3](https://aladin.cds.unistra.fr/AladinLite/).
   activables/désactivables individuellement
 - **Grille de coordonnées** RA/Dec toggle ON/OFF (bouton sidebar + contrôle natif Aladin)
 - **Clic sur une alerte** → panneau de détail : `diaObjectId` (64-bit précis), RA/Dec,
-  tag, filtre, MJD, nombre de sources, lien direct vers le portail Fink
+  tag, filtre, MJD, nombre de sources, **lien direct vers le portail Fink**
 - **Copie en un clic** du `diaObjectId` dans le presse-papier
 - Barre de coordonnées temps-réel (RA, Dec, FoV) en bas de carte
 - Contrôle du nombre d'alertes par tag (slider 50–500)
 - Log d'activité en temps réel dans la sidebar
 - Plein écran natif
-
-**Points techniques notables :**
-- Décodage `diaObjectId` 64-bit sans perte de précision : interception du JSON brut
-  avant `JSON.parse()` + conversion via `BigInt()` → `String()`
-- Toggle grille via simulation de clic sur le bouton natif Aladin (l'API publique
-  `showCooGrid(false)` est non fonctionnelle en v3 — solution issue du code source CDS)
 - Aucun serveur requis : ouvrir directement dans un navigateur moderne
 
 **Endpoints :** `/api/v1/tags`
