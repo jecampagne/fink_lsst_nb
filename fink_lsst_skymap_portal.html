@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FINK · LSST Alert Sky Map</title>
+<script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js" charset="utf-8"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+:root {
+  --bg:#080c12; --panel:#0d1520; --border:rgba(100,160,255,0.15);
+  --accent:#4a9eff; --accent2:#7ecfff; --text:#c8d8f0; --text-dim:#5a7090;
+  --mono:'Space Mono',monospace; --sans:'DM Sans',sans-serif;
+}
+html,body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:var(--sans); overflow:hidden; }
+#app { display:flex; flex-direction:column; height:100vh; }
+
+/* ── Header ─────────────────────────────────────────────────── */
+#header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 16px; height:46px; background:var(--panel);
+  border-bottom:1px solid var(--border); flex-shrink:0; z-index:100;
+}
+.logo { display:flex; align-items:center; gap:9px; }
+.logo-badge {
+  width:28px; height:28px; border-radius:5px;
+  background:linear-gradient(135deg,#1a3a6e,#0a1f40);
+  border:1px solid var(--accent); display:flex; align-items:center;
+  justify-content:center; font-family:var(--mono); font-size:8px; color:var(--accent);
+}
+.logo-text { font-family:var(--mono); font-size:13px; font-weight:700; color:#e8f4ff; letter-spacing:1px; }
+.logo-sub  { font-size:9px; color:var(--text-dim); font-family:var(--mono); }
+.hdr-stats { display:flex; align-items:center; gap:16px; }
+.stat-chip .val { font-family:var(--mono); font-size:13px; font-weight:700; color:var(--accent2); text-align:right; }
+.stat-chip .lbl { font-size:8px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; }
+.pulse-dot { width:8px; height:8px; border-radius:50%; background:#44ff88; box-shadow:0 0 6px #44ff88; animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.4);} }
+
+/* ── Body ───────────────────────────────────────────────────── */
+#body { display:flex; flex:1; overflow:hidden; }
+
+/* ── Sidebar ────────────────────────────────────────────────── */
+#sidebar {
+  width:230px; flex-shrink:0; background:var(--panel);
+  border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden;
+}
+.sb { padding:10px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.sb h3 { font-family:var(--mono); font-size:8px; color:var(--text-dim); text-transform:uppercase; letter-spacing:2px; margin-bottom:7px; }
+
+.tag-row {
+  display:flex; align-items:center; gap:6px; padding:4px 6px;
+  border-radius:4px; margin-bottom:2px; cursor:pointer; transition:background .15s;
+  user-select:none; border:1px solid transparent;
+}
+.tag-row:hover { background:rgba(255,255,255,0.05); }
+.tag-row.active { border-color:rgba(255,255,255,0.07); }
+.tag-row.inactive { opacity:.38; }
+.tag-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.tag-label { font-size:11px; flex:1; }
+.tag-count { font-family:var(--mono); font-size:9px; color:var(--text-dim); background:rgba(255,255,255,0.06); padding:1px 5px; border-radius:8px; min-width:26px; text-align:center; }
+.tag-chk { width:13px; height:13px; border-radius:3px; border:1px solid var(--border); background:rgba(255,255,255,0.04); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:8px; color:#fff; }
+.tag-row.active .tag-chk { background:var(--accent); border-color:var(--accent); }
+
+.srv-btn {
+  display:block; width:100%; padding:5px 8px; margin-bottom:3px;
+  background:rgba(255,255,255,0.04); border:1px solid var(--border);
+  border-radius:4px; color:var(--text); font-size:11px; font-family:var(--sans);
+  cursor:pointer; text-align:left; transition:all .15s;
+}
+.srv-btn:hover { background:rgba(74,158,255,0.1); border-color:var(--accent); }
+.srv-btn.on { background:rgba(74,158,255,0.15); border-color:var(--accent); color:var(--accent2); }
+
+.ctrl-row { display:flex; gap:4px; margin-bottom:6px; }
+.ctrl-btn {
+  flex:1; padding:5px 2px; font-size:9px; font-family:var(--mono);
+  background:rgba(255,255,255,0.05); border:1px solid var(--border);
+  border-radius:4px; color:var(--text); cursor:pointer; text-align:center;
+  transition:all .15s; letter-spacing:.5px;
+}
+.ctrl-btn:hover { background:rgba(74,158,255,0.12); border-color:var(--accent); color:var(--accent2); }
+.ctrl-btn.active-btn { background:rgba(74,158,255,0.2); border-color:var(--accent); color:var(--accent2); }
+
+.param-row { margin-bottom:8px; }
+.param-row label { font-size:10px; color:var(--text-dim); display:flex; justify-content:space-between; margin-bottom:3px; }
+.param-row label span { color:var(--accent2); font-family:var(--mono); }
+input[type=range] { width:100%; -webkit-appearance:none; height:3px; background:rgba(255,255,255,0.1); border-radius:2px; outline:none; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:11px; height:11px; border-radius:50%; background:var(--accent); cursor:pointer; }
+
+#load-btn {
+  width:100%; padding:8px; background:linear-gradient(135deg,#1a4a8a,#0d2d5a);
+  border:1px solid var(--accent); border-radius:5px; color:var(--accent2);
+  font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:1px;
+  cursor:pointer; transition:all .2s; margin-top:2px;
+}
+#load-btn:hover:not(:disabled) { box-shadow:0 0 12px rgba(74,158,255,.3); }
+#load-btn:disabled { opacity:.4; cursor:not-allowed; }
+
+/* Progress */
+#prog-wrap { padding:7px 12px; border-bottom:1px solid var(--border); display:none; flex-shrink:0; }
+#prog-outer { height:3px; background:rgba(255,255,255,0.07); border-radius:2px; overflow:hidden; }
+#prog-inner { height:100%; background:var(--accent); border-radius:2px; width:0%; transition:width .3s; }
+#prog-label { font-family:var(--mono); font-size:9px; color:var(--text-dim); margin-top:4px; text-align:center; }
+
+/* Log */
+#log-wrap {
+  flex:1; overflow-y:auto; padding:7px 11px;
+  font-family:var(--mono); font-size:10px; line-height:1.65; min-height:0;
+}
+#log-wrap::-webkit-scrollbar { width:3px; }
+#log-wrap::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); }
+.ll { padding:1px 0; word-break:break-all; }
+.ll.ok  { color:#44cc88; }
+.ll.err { color:#ff6644; }
+.ll.inf { color:var(--accent); }
+.ll.dim { color:var(--text-dim); }
+
+/* ── Map ────────────────────────────────────────────────────── */
+#map-wrap { flex:1; position:relative; overflow:hidden; }
+#aladin-container { width:100%; height:100%; }
+
+/* Info panel */
+#info-panel {
+  position:absolute; bottom:28px; left:14px; width:280px;
+  background:rgba(8,14,24,0.94); border:1px solid var(--border);
+  border-radius:8px; padding:12px 14px; backdrop-filter:blur(12px);
+  display:none; z-index:200; animation:slideUp .18s ease;
+}
+@keyframes slideUp { from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);} }
+#info-close { position:absolute; top:7px; right:9px; background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:13px; line-height:1; }
+#info-close:hover { color:#fff; }
+#info-oid {
+  font-family:var(--mono); font-size:11px; font-weight:700; color:#fff;
+  background:rgba(255,255,255,0.07); border-radius:4px; padding:5px 8px;
+  margin-bottom:8px; word-break:break-all; cursor:pointer; border:1px solid rgba(255,255,255,0.08);
+  display:flex; align-items:center; justify-content:space-between; gap:6px;
+}
+#info-oid:hover { border-color:var(--accent); background:rgba(74,158,255,0.08); }
+#info-oid .oid-label { font-size:8px; color:var(--text-dim); display:block; margin-bottom:2px; }
+#info-oid .oid-val { font-size:10px; color:var(--accent2); }
+#info-oid .copy-icon { font-size:11px; color:var(--text-dim); flex-shrink:0; }
+#info-title { font-family:var(--mono); font-size:9px; color:var(--accent); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px; }
+.ir { display:flex; justify-content:space-between; align-items:center; padding:3px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+.ir:last-child { border:none; }
+.ir .k { font-size:9px; color:var(--text-dim); font-family:var(--mono); }
+.ir .v { font-size:10px; color:var(--text); font-family:var(--mono); font-weight:700; }
+.tag-badge { display:inline-block; padding:1px 7px; border-radius:9px; font-size:9px; font-family:var(--mono); font-weight:700; }
+#info-link {
+  display:block; margin-top:9px; text-align:center; padding:5px;
+  background:rgba(74,158,255,.08); border:1px solid var(--border);
+  border-radius:4px; color:var(--accent); font-size:9px; font-family:var(--mono);
+  text-decoration:none; transition:all .15s;
+}
+#info-link:hover { background:rgba(74,158,255,.2); border-color:var(--accent); }
+
+
+
+/* Coords bar */
+#cbar {
+  position:absolute; bottom:0; left:0; right:0; height:22px;
+  background:rgba(8,14,24,.88); border-top:1px solid var(--border);
+  display:flex; align-items:center; padding:0 10px; gap:16px; z-index:100;
+  pointer-events:none;
+}
+#cbar span { font-family:var(--mono); font-size:9px; color:var(--text-dim); }
+.cv { color:var(--accent2) !important; }
+
+/* Grille : override couleurs Aladin – blanc sur fond Mellinger sombre */
+.aladin-gridLabel { color: #ffffff !important; text-shadow: 0 0 3px #000, 0 0 6px #000 !important; font-size: 10px !important; }
+.aladin-grid path, .aladin-grid line { stroke: rgba(255,255,255,0.55) !important; }
+/* Masquer le bouton natif grid d'Aladin — on utilise notre propre bouton custom */
+.aladin-cooGrid-control { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div class="logo">
+      <div class="logo-badge">FK</div>
+      <div>
+        <div class="logo-text">FINK · LSST</div>
+        <div class="logo-sub">Alert Sky Browser</div>
+      </div>
+    </div>
+    <div class="hdr-stats">
+      <div class="stat-chip"><div class="val" id="hdr-n">—</div><div class="lbl">Alerts</div></div>
+      <div class="stat-chip"><div class="val" id="hdr-t">—</div><div class="lbl">Tags</div></div>
+      <div class="pulse-dot" title="FINK LSST API"></div>
+    </div>
+  </div>
+
+  <div id="body">
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+
+      <div class="sb">
+        <h3>Alert Tags</h3>
+        <div id="tag-list"></div>
+      </div>
+
+      <div class="sb">
+        <h3>Background Survey</h3>
+        <button class="srv-btn on" data-s="https://alaskybis.cds.unistra.fr/MellingerRGB/" onclick="setSurvey(this)">🌌 Mellinger RGB</button>
+        <button class="srv-btn" data-s="P/PanSTARRS/DR1/color-z-zg-g" onclick="setSurvey(this)">🟣 PanSTARRS</button>
+        <button class="srv-btn" data-s="P/DSS2/color"    onclick="setSurvey(this)">🔭 DSS2 Color</button>
+        <button class="srv-btn" data-s="P/2MASS/color"   onclick="setSurvey(this)">🔴 2MASS IR</button>
+        <button class="srv-btn" data-s="P/allWISE/color" onclick="setSurvey(this)">💛 WISE Color</button>
+        <button class="srv-btn" data-s="P/XMM/EPIC"      onclick="setSurvey(this)">⚡ XMM X-ray</button>
+      </div>
+
+      <div class="sb">
+        <h3>View Controls</h3>
+        <div class="param-row">
+          <label>Alerts per tag <span id="nval">50</span></label>
+          <input type="range" id="nslider" min="50" max="500" step="50" value="50"
+                 oninput="document.getElementById('nval').textContent=this.value">
+        </div>
+        <div class="ctrl-row">
+          <button class="ctrl-btn" id="btn-allsky" onclick="goAllSky()">ALL SKY</button>
+          <button class="ctrl-btn" id="btn-grid" onclick="toggleGrid()">GRID OFF</button>
+          <button class="ctrl-btn" id="btn-proj" onclick="toggleProj()">MOL</button>
+        </div>
+        <button id="load-btn" onclick="loadAll()">⚡ LOAD ALERTS</button>
+      </div>
+
+      <div id="prog-wrap">
+        <div id="prog-outer"><div id="prog-inner"></div></div>
+        <div id="prog-label">…</div>
+      </div>
+
+      <div id="log-wrap">
+        <div class="ll dim">→ Ready. Press LOAD ALERTS.</div>
+      </div>
+    </div>
+
+    <!-- MAP -->
+    <div id="map-wrap">
+      <div id="aladin-container"></div>
+
+      <div id="info-panel">
+        <button id="info-close" onclick="document.getElementById('info-panel').style.display='none'">✕</button>
+        <div id="info-title">Alert Detail</div>
+        <div id="info-oid" onclick="copyOid()" title="Cliquer pour copier">
+          <div><span class="oid-label">diaObjectId</span><span class="oid-val" id="info-oid-val">—</span></div>
+          <span class="copy-icon">&#9003;</span>
+        </div>
+        <div id="info-body"></div>
+        <a id="info-link" href="#" target="_blank">→ View on FINK Portal</a>
+      </div>
+
+
+
+      <div id="cbar">
+        <span>RA <span class="cv" id="c-ra">—</span></span>
+        <span>Dec <span class="cv" id="c-dec">—</span></span>
+        <span>FoV <span class="cv" id="c-fov">—</span>°</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ─────────────────────────────────────────────────────────────────────
+const API    = "https://api.lsst.fink-portal.org";
+const PORTAL = "https://lsst.fink-portal.org";
+
+const TAGS = {
+  "hostless_candidate"             : {color:"#ff4444", label:"Hostless"},
+  "sn_near_galaxy_candidate"       : {color:"#44aaff", label:"SN near galaxy"},
+  "extragalactic_lt20mag_candidate": {color:"#ffaa00", label:"Extragal. <20mag"},
+  "extragalactic_new_candidate"    : {color:"#44ff88", label:"New extragal."},
+  "in_tns"                         : {color:"#ff88ff", label:"In TNS"},
+};
+
+let activeSet  = new Set(["hostless_candidate","sn_near_galaxy_candidate","extragalactic_lt20mag_candidate",
+  "extragalactic_new_candidate", "in_tns"
+]);
+let catalogues = {};
+let gridOn     = false;   // GRILLE DÉSACTIVÉE au départ
+let aladin     = null;
+
+// ── Aladin init ────────────────────────────────────────────────────────────────
+A.init.then(() => {
+  aladin = A.aladin('#aladin-container', {
+    survey               : "https://alaskybis.cds.unistra.fr/MellingerRGB/",
+    target               : "0 0",
+    fov                  : 360,        // FOV 360° = carte entière visible en Mollweide
+    projection           : "MOL",
+    cooFrame             : "ICRSd",    // Gal
+    showReticle          : true,
+    showZoomControl      : true,
+    showLayersControl    : true,
+    showCooGridControl   : true,       // bouton natif Aladin v3 — nécessaire pour le toggle
+    showCooGrid          : false,      // grille OFF au départ
+    cooGridColor         : "#ffffff",
+    cooGridOpacity       : 0.5,
+  });
+
+  // Suivi de position
+  aladin.on('positionChanged', p => {
+    document.getElementById('c-ra').textContent  = p.ra.toFixed(3);
+    document.getElementById('c-dec').textContent = p.dec.toFixed(3);
+    document.getElementById('c-fov').textContent = aladin.getFov()[0].toFixed(1);
+  });
+
+  // ── Clic sur une source ─────────────────────────────────────
+  aladin.on('objectClicked', obj => {
+    if (!obj) return;
+    const tagKey = obj.data && obj.data.tag ? obj.data.tag : null;
+    const cfg = tagKey && TAGS[tagKey]
+      ? TAGS[tagKey]
+      : {color:'#aaaaaa', label: (obj.data && obj.data.tagLabel) || 'Alert'};
+    showInfo(obj, cfg);
+  });
+
+  log("Aladin Lite v3 ✓ — Mellinger RGB", "ok");
+  log("Grille coords : OFF (bouton GRID pour activer)", "dim");
+  log("Cliquez LOAD ALERTS pour charger les données FINK", "inf");
+
+}).catch(e => log("Aladin init error: " + e, "err"));
+
+// ── Tag list ───────────────────────────────────────────────────────────────────
+function buildTagList() {
+  const c = document.getElementById('tag-list');
+  for (const [tag, cfg] of Object.entries(TAGS)) {
+    const active = activeSet.has(tag);
+    const row = document.createElement('div');
+    row.className = 'tag-row ' + (active ? 'active' : 'inactive');
+    row.id = 'tr-' + tag;
+    row.innerHTML = `
+      <div class="tag-dot" style="background:${cfg.color};box-shadow:0 0 4px ${cfg.color}66"></div>
+      <div class="tag-label">${cfg.label}</div>
+      <div class="tag-count" id="cnt-${tag}">—</div>
+      <div class="tag-chk" id="chk-${tag}">${active ? '✓' : ''}</div>
+    `;
+    row.addEventListener('click', () => toggleTag(tag));
+    c.appendChild(row);
+  }
+}
+
+function toggleTag(tag) {
+  const row = document.getElementById('tr-' + tag);
+  const chk = document.getElementById('chk-' + tag);
+  if (activeSet.has(tag)) {
+    activeSet.delete(tag);
+    row.className = 'tag-row inactive';
+    chk.textContent = '';
+    if (catalogues[tag]) { try { catalogues[tag].hide(); } catch(e){} }
+  } else {
+    activeSet.add(tag);
+    row.className = 'tag-row active';
+    chk.textContent = '✓';
+    if (catalogues[tag]) { try { catalogues[tag].show(); } catch(e){} }
+  }
+}
+
+// ── Survey ─────────────────────────────────────────────────────────────────────
+function setSurvey(btn) {
+  document.querySelectorAll('.srv-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  if (aladin) aladin.setImageSurvey(btn.dataset.s);
+}
+
+// ── Grid toggle ──────────────────────────────────────────────────────────────
+// Stratégie (issue du code officiel CDS alaskybis.cds.unistra.fr/index.js) :
+//   L'API publique showCooGrid(false) / setShowCooGrid(false) est cassée en v3.
+//   CDS eux-mêmes utilisent showCooGridControl:true et le bouton NATIF Aladin
+//   pour gérer le toggle — celui-ci maintient son propre état interne et
+//   redessine correctement.
+//   → On simule un clic sur le bouton natif caché pour déléguer le toggle,
+//     et on met à jour notre UI custom en conséquence.
+function toggleGrid() {
+  gridOn = !gridOn;
+
+  // Trouver et cliquer sur le bouton natif Aladin v3 qui gère vraiment le toggle
+  // Aladin injecte ce bouton dans #aladin-container avec plusieurs classes possibles
+  const container = document.getElementById('aladin-container');
+  if (container) {
+    const nativeBtn = container.querySelector(
+      '.aladin-cooGrid-control, ' +
+      '[title*="grid" i], [title*="grille" i], ' +
+      '[aria-label*="grid" i], [aria-label*="grille" i]'
+    );
+    if (nativeBtn) {
+      nativeBtn.click();  // délègue à Aladin — son état interne est correct
+    } else {
+      // Fallback si le bouton natif n'est pas trouvé (ne devrait pas arriver)
+      if (aladin) {
+        try { aladin.showCooGrid(gridOn); } catch(e) {}
+      }
+    }
+  }
+
+  // Mise à jour de notre UI custom
+  const btnS = document.getElementById('btn-grid');
+  if (btnS) {
+    btnS.textContent = gridOn ? 'GRID ON' : 'GRID OFF';
+    btnS.classList.toggle('active-btn', gridOn);
+  }
+  // #mb-grid supprimé — le bouton natif Aladin gère son propre état visuel
+}
+
+
+
+let projMol = true;
+function toggleProj() {
+  projMol = !projMol;
+  const p = projMol ? 'MOL' : 'AIT';
+  if (aladin) aladin.setProjection(p);
+  const btn = document.getElementById('btn-proj');
+  btn.textContent = p;
+  btn.classList.toggle('active-btn', !projMol);
+}
+
+// ── All sky view ───────────────────────────────────────────────────────────────
+function goAllSky() {
+  if (!aladin) return;
+  aladin.gotoRaDec(0, 0);
+  aladin.setFov(360);
+}
+
+// ── Log ────────────────────────────────────────────────────────────────────────
+function log(msg, type='dim') {
+  const wrap = document.getElementById('log-wrap');
+  const el   = document.createElement('div');
+  el.className = 'll ' + type;
+  const now = new Date();
+  const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  el.textContent = `[${ts}] ${msg}`;
+  wrap.appendChild(el);
+  wrap.scrollTop = wrap.scrollHeight;
+  while (wrap.children.length > 300) wrap.removeChild(wrap.firstChild);
+}
+
+function setProgress(pct, label) {
+  document.getElementById('prog-inner').style.width = Math.min(pct,100) + '%';
+  document.getElementById('prog-label').textContent = label;
+}
+
+// ── Fetch : un seul appel par tag ──────────────────────────────────────────────
+// L'API /api/v1/tags retourne directement les colonnes demandées.
+// On essaie d'abord avec colonnes explicites, sinon sans (les colonnes par défaut
+// incluent ra/dec dans l'API FINK).
+// ── parseSafeText : décodage 64-bit safe (patch BigInt) ───────────────────────
+// Intercepte le texte JSON AVANT JSON.parse pour éviter la troncature des
+// grands entiers (diaObjectId) par Number/parseFloat (max 53-bit en JS).
+function parseSafeText(text) {
+  // 1. Mettre entre guillemets les valeurs numériques de diaObjectId
+  //    afin qu'elles soient traitées comme des strings par JSON.parse.
+  //    On cible les deux formes possibles de clé dans la réponse API :
+  //      "r:diaObjectId": 1234567890123456789
+  //      "diaObjectId":   1234567890123456789
+  const safe = text
+    .replace(/"r:diaObjectId"\s*:\s*(\d+)/g, '"r:diaObjectId":"$1"')
+    .replace(/"diaObjectId"\s*:\s*(\d+)/g,   '"diaObjectId":"$1"');
+
+  // 2. Parser le JSON modifié — diaObjectId est maintenant une string
+  const data = JSON.parse(safe);
+
+  // 3. Convertir la string en BigInt puis en String finale (pour URL, clipboard…)
+  //    ra / dec restent des Number normaux (pas de problème de précision).
+  return data.map(obj => {
+    const out = {};
+    for (const [k, v] of Object.entries(obj)) {
+      const key = k.replace(/^[a-zA-Z]+:/, ''); // retire "r:", "i:", etc.
+      if (key === 'diaObjectId') {
+        // v est une string (on vient de le mettre entre guillemets ci-dessus)
+        try { out[key] = String(BigInt(v)); }
+        catch(e) { out[key] = String(v); }
+      } else if (key === 'ra' || key === 'dec') {
+        out[key] = parseFloat(v);
+      } else {
+        out[key] = v;
+      }
+    }
+    return out;
+  });
+}
+
+// ── fetchTag : utilise resp.text() + parseSafeText() pour préserver les IDs 64-bit ──
+async function fetchTag(tag, n) {
+  // Essai 1 : colonnes explicites
+  const payloadCols = {
+    tag, n,
+    "output-format": "json",
+    columns: "r:diaObjectId,r:ra,r:dec,r:band,r:midpointMjdTai,r:nDiaSources"
+  };
+  let resp = await fetch(`${API}/api/v1/tags`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payloadCols)
+  });
+
+  if (resp.ok) {
+    const text = await resp.text();
+    if (text && text.trim() !== '[]' && text.trim() !== '') {
+      try {
+        const data = parseSafeText(text);
+        if (data && data.length) return data;
+      } catch(e) {
+        log(`  parseSafeText erreur (cols): ${e.message}`, "err");
+      }
+    }
+  }
+
+  log(`  colonnes explicites KO (${resp.status}), essai sans colonnes…`, "dim");
+
+  // Essai 2 : sans colonnes (colonnes par défaut de l'API)
+  const payloadDef = { tag, n, "output-format": "json" };
+  resp = await fetch(`${API}/api/v1/tags`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payloadDef)
+  });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const text2 = await resp.text();
+  return parseSafeText(text2);
+}
+
+
+function normalizeRow(raw) {
+  // parseSafeText() a déjà :
+  //   - retiré les préfixes de colonnes ("r:", "i:", …)
+  //   - converti diaObjectId via BigInt → String (précision 64-bit préservée)
+  //   - converti ra / dec en Number
+  // On s'assure juste que diaObjectId est bien une string.
+  const out = {};
+  for (const [k, v] of Object.entries(raw)) {
+    const key = k.replace(/^[a-zA-Z]+:/, '');
+    if (key === 'diaObjectId' || key === 'objectId') {
+      out[key] = v !== null && v !== undefined ? String(v) : null;
+    } else {
+      out[key] = v;
+    }
+  }
+  return out;
+}
+
+
+function hasCoords(row) {
+  const ra  = parseFloat(row.ra);
+  const dec = parseFloat(row.dec);
+  return !isNaN(ra) && !isNaN(dec);
+}
+
+// ── Loader principal ───────────────────────────────────────────────────────────
+async function loadAll() {
+  if (!aladin) { log("Aladin pas encore prêt — attendez un instant", "err"); return; }
+
+  const btn = document.getElementById('load-btn');
+  btn.disabled = true;
+  document.getElementById('prog-wrap').style.display = 'block';
+
+  // Supprime les anciens catalogues
+  for (const [t, cat] of Object.entries(catalogues)) {
+    try { aladin.removeCatalogue(cat); } catch(e) {}
+  }
+  catalogues = {};
+
+  const N = parseInt(document.getElementById('nslider').value);
+  const tagsToLoad = [...activeSet];
+  let grandTotal = 0;
+
+  log(`═══ Load: ${tagsToLoad.length} tag(s) × ${N} alertes ═══`, "inf");
+
+  for (let ti = 0; ti < tagsToLoad.length; ti++) {
+    const tag = tagsToLoad[ti];
+    const cfg = TAGS[tag];
+    const pctBase = (ti / tagsToLoad.length) * 100;
+    const pctStep  = 100 / tagsToLoad.length;
+
+    log(`▶ [${cfg.label}]…`, "inf");
+    setProgress(pctBase, `${cfg.label} — requête API…`);
+
+    // 1. Fetch
+    let raw;
+    try {
+      raw = await fetchTag(tag, N);
+    } catch(e) {
+      log(`  ✗ Erreur fetch: ${e.message}`, "err");
+      document.getElementById('cnt-' + tag).textContent = '!';
+      continue;
+    }
+
+    if (!raw || !raw.length) {
+      log(`  ⚠ Aucune donnée retournée`, "err");
+      document.getElementById('cnt-' + tag).textContent = '0';
+      continue;
+    }
+
+    log(`  API → ${raw.length} lignes`, "ok");
+
+    // 2. Normaliser les clés
+    const rows = raw.map(normalizeRow);
+
+    // Debug : afficher les clés disponibles
+    const keys = Object.keys(rows[0]);
+    log(`  Colonnes: ${keys.slice(0,8).join(', ')}${keys.length>8?'…':''}`, "dim");
+
+    // 3. Filtrer les lignes avec RA/Dec valides
+    const valid = rows.filter(hasCoords);
+    if (!valid.length) {
+      // Chercher des colonnes alternatives (ex: "coord_ra", "ra2000"…)
+      const raAlt  = keys.find(k => k.toLowerCase().includes('ra'));
+      const decAlt = keys.find(k => k.toLowerCase().includes('dec'));
+      log(`  ✗ Pas de colonnes ra/dec — colonnes dispo: ${keys.join(', ')}`, "err");
+      if (raAlt && decAlt && raAlt !== 'ra') {
+        log(`  Tentative avec colonnes alternatives: ${raAlt}, ${decAlt}`, "dim");
+        rows.forEach(r => { r.ra = r[raAlt]; r.dec = r[decAlt]; });
+        const valid2 = rows.filter(hasCoords);
+        if (valid2.length) {
+          log(`  ✓ ${valid2.length} sources avec ${raAlt}/${decAlt}`, "ok");
+          // continuer avec valid2 — on recharge valid
+          valid.push(...valid2);
+        }
+      }
+      if (!valid.length) {
+        document.getElementById('cnt-' + tag).textContent = '0';
+        continue;
+      }
+    }
+
+    log(`  ✓ ${valid.length}/${rows.length} avec RA/Dec valides`, "ok");
+    setProgress(pctBase + pctStep * 0.7, `${cfg.label} — ajout sur la carte…`);
+
+    // 4. Construire le catalogue Aladin v3
+    let cat;
+    try {
+      cat = A.catalog({
+        name       : cfg.label,
+        color      : cfg.color,
+        sourceSize : 10,
+        shape      : 'circle',
+      });
+    } catch(e) {
+      log(`  ✗ A.catalog() : ${e.message}`, "err");
+      continue;
+    }
+
+    // 5. Créer les sources
+    const sources = [];
+    for (const r of valid) {
+      try {
+        sources.push(A.source(
+          parseFloat(r.ra),
+          parseFloat(r.dec),
+          {
+            // diaObjectId déjà en string dans normalizeRow (entier 64-bit)
+            diaObjectId : r.diaObjectId || r.objectId || '—',
+            tag         : tag,
+            tagLabel    : cfg.label,
+            band        : String(r.band || r.filter || '—'),
+            mjd         : r.midpointMjdTai ? parseFloat(r.midpointMjdTai).toFixed(2) : '—',
+            nDiaSrc     : String(r.nDiaSources || '—'),
+          }
+        ));
+      } catch(e) { /* ligne invalide ignorée */ }
+    }
+
+    if (!sources.length) {
+      log(`  ✗ Aucune source construite`, "err");
+      continue;
+    }
+
+    // 6. Ajouter sources au catalogue
+    try {
+      cat.addSources(sources);
+    } catch(e) {
+      log(`  ✗ addSources: ${e.message}`, "err");
+      continue;
+    }
+
+    // 7. Ajouter le catalogue à la carte
+    try {
+      aladin.addCatalog(cat);
+    } catch(e) {
+      log(`  ✗ addCatalog: ${e.message}`, "err");
+      continue;
+    }
+
+    catalogues[tag] = cat;
+    grandTotal += sources.length;
+    document.getElementById('cnt-' + tag).textContent = sources.length;
+    setProgress(pctBase + pctStep, `${cfg.label} ✓`);
+    log(`  ✓ ${sources.length} sources sur la carte`, "ok");
+  }
+
+  // Fin
+  setProgress(100, `Terminé — ${grandTotal} alertes`);
+  setTimeout(() => { document.getElementById('prog-wrap').style.display = 'none'; }, 3000);
+
+  document.getElementById('hdr-n').textContent = grandTotal;
+  document.getElementById('hdr-t').textContent = Object.keys(catalogues).length;
+  btn.disabled = false;
+
+  if (grandTotal > 0) {
+    log(`═══ ${grandTotal} alertes chargées sur ${Object.keys(catalogues).length} tag(s) ═══`, "ok");
+    log(`Cliquez sur un point pour voir les détails`, "inf");
+  } else {
+    log(`⚠ 0 alertes affichées — voir le log ci-dessus`, "err");
+  }
+}
+
+// ── Panneau info ───────────────────────────────────────────────────────────────
+let _currentOid = '';
+
+function copyOid() {
+  if (!_currentOid) return;
+  navigator.clipboard.writeText(_currentOid).then(() => {
+    const el = document.getElementById('info-oid-val');
+    const prev = el.textContent;
+    el.textContent = 'Copié ✓';
+    setTimeout(() => { el.textContent = prev; }, 1200);
+  });
+}
+
+function showInfo(obj, cfg) {
+  const p = obj.data || {};
+
+  // diaObjectId : clé transmise lors de A.source()
+  // L'API /tags retourne 'i:diaObjectId' → normalisé en 'diaObjectId'
+  // Le portail LSST attend : https://lsst.fink-portal.org/<diaObjectId>
+  const oid = p.diaObjectId && p.diaObjectId !== '—' ? String(p.diaObjectId) : '';
+  _currentOid = oid;
+
+  document.getElementById('info-title').innerHTML =
+    `<span style="color:${cfg.color}">●</span>  ${cfg.label}`;
+
+  document.getElementById('info-oid-val').textContent = oid || '—';
+
+  document.getElementById('info-body').innerHTML = `
+    <div class="ir"><span class="k">RA</span><span class="v">${obj.ra !== undefined ? obj.ra.toFixed(5) : '—'}°</span></div>
+    <div class="ir"><span class="k">Dec</span><span class="v">${obj.dec !== undefined ? obj.dec.toFixed(5) : '—'}°</span></div>
+    <div class="ir"><span class="k">Tag</span>
+      <span class="tag-badge" style="background:${cfg.color}22;color:${cfg.color};border:1px solid ${cfg.color}55">${p.tagLabel||'—'}</span>
+    </div>
+    <div class="ir"><span class="k">Band</span><span class="v">${p.band||'—'}</span></div>
+    <div class="ir"><span class="k">Last MJD</span><span class="v">${p.mjd||'—'}</span></div>
+    <div class="ir"><span class="k">N dia sources</span><span class="v">${p.nDiaSrc||'—'}</span></div>
+  `;
+
+  document.getElementById('info-link').href = oid ? `${PORTAL}/${oid}` : PORTAL;
+  document.getElementById('info-link').style.opacity = oid ? '1' : '0.5';
+  document.getElementById('info-panel').style.display = 'block';
+
+  // Log l'URL pour vérification
+  log(`Portail → ${PORTAL}/${oid}`, 'dim');
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+buildTagList();
+</script>
+</body>
+</html>
