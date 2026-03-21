@@ -101,16 +101,51 @@ ou plusieurs tags.
 
 ---
 
-### 🌍 `fink_lsst_skymap.ipynb` — Carte céleste (Mollweide)
+### 🌍 `fink_lsst_skymap.ipynb` — Carte céleste statique (Mollweide + 3D)
 Affiche la **distribution spatiale** des alertes d'un tag donné sur une projection
-de Mollweide, avec superposition du plan galactique et de l'écliptique.
+de Mollweide matplotlib, avec une vue 3D interactive Plotly en bonus.
 
-- Carte Mollweide avec plan galactique et écliptique
-- Coloration par filtre dominant ou par propriété photométrique
-- Annotations optionnelles (`diaObjectId`, coordonnées)
-- Grille RA/Dec
+- Carte de Mollweide avec superposition du **plan galactique** et de l'**écliptique**
+  (calculés via Astropy en coordonnées ICRS)
+- **Coloration par filtre dominant** (u/g/r/i/z/y) ou par flux PSF maximum (colormap continue)
+- Annotations optionnelles : `diaObjectId` et/ou coordonnées α/δ par point
+- Grille RA/Dec configurable
+- **Vue 3D interactive** (Plotly `Scatter3d`) sur sphère céleste, exportée en HTML autonome
+- Distributions marginales RA et Dec (histogrammes)
+- Tableau récapitulatif avec liens directs vers le portail Fink/LSST
+- Sauvegarde automatique des figures en PDF et PNG
 
 **Endpoints :** `/api/v1/tags` · `/api/v1/sources`
+
+---
+
+### 🗺️ `fink_lsst_skymap_portal.html` — Navigateur de ciel interactif (Aladin Lite v3)
+Application web **standalone** (un seul fichier HTML, aucune dépendance serveur)
+affichant les alertes FINK/LSST sur une carte du ciel interactive temps-réel,
+construite sur [Aladin Lite v3](https://aladin.cds.unistra.fr/AladinLite/).
+
+**Fonctionnalités principales :**
+- Carte en **projection Mollweide** (basculable AIT) avec zoom molette et panoramique souris
+- **Fond de ciel HiPS** sélectionnable : Mellinger RGB, PanSTARRS, DSS2, 2MASS, WISE, XMM X-ray
+- **Multi-tags simultanés** : jusqu'à 5 tags FINK affichés en couleurs distinctes,
+  activables/désactivables individuellement
+- **Grille de coordonnées** RA/Dec toggle ON/OFF (bouton sidebar + contrôle natif Aladin)
+- **Clic sur une alerte** → panneau de détail : `diaObjectId` (64-bit précis), RA/Dec,
+  tag, filtre, MJD, nombre de sources, lien direct vers le portail Fink
+- **Copie en un clic** du `diaObjectId` dans le presse-papier
+- Barre de coordonnées temps-réel (RA, Dec, FoV) en bas de carte
+- Contrôle du nombre d'alertes par tag (slider 50–500)
+- Log d'activité en temps réel dans la sidebar
+- Plein écran natif
+
+**Points techniques notables :**
+- Décodage `diaObjectId` 64-bit sans perte de précision : interception du JSON brut
+  avant `JSON.parse()` + conversion via `BigInt()` → `String()`
+- Toggle grille via simulation de clic sur le bouton natif Aladin (l'API publique
+  `showCooGrid(false)` est non fonctionnelle en v3 — solution issue du code source CDS)
+- Aucun serveur requis : ouvrir directement dans un navigateur moderne
+
+**Endpoints :** `/api/v1/tags`
 
 ---
 
