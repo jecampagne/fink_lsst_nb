@@ -1,11 +1,13 @@
-# 🔭 Fink/LSST — Notebooks d'exploration
+# 🔭 Fink/LSST — Exploration
 
-Collection de notebooks Jupyter pour explorer les alertes du survey **LSST/Rubin Observatory**
-via l'API du portail [Fink](https://lsst.fink-portal.org).
 
 Fink est un broker d'alertes astronomiques qui enrichit les alertes LSST avec des scores de
 classification ML, des cross-matches avec des catalogues externes (Gaia DR3, TNS, SIMBAD…)
 et des tags scientifiques.
+
+Ci-dessous vous trouverez une appication Web pour montrer la localisation des alertes du survey **LSST/Rubin Observatory** 
+ainsi qu'une collection de notebooks Jupyter pour explorer ces alertes.
+
 
 **API base URL :** `https://api.lsst.fink-portal.org`
 
