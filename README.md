@@ -58,6 +58,37 @@ de Mollweide matplotlib, avec une vue 3D interactive Plotly en bonus.
 
 ---
 
+### 📈 `fink_lsst_lightcurves.ipynb` — Courbes de lumière multi-bandes
+Génère une **figure de courbe de lumière par objet** pour un tag donné, avec toutes les
+bandes `ugrizy` superposées sur un même graphe.
+
+- Courbe de lumière en **flux PSF (nJy)** — toutes bandes superposées (panneau haut)
+- Courbe de lumière en **magnitude AB** — toutes bandes superposées (panneau bas)
+- Axes temporels partagés et synchronisés
+- Couleurs LSST standards par filtre (`u`/`g`/`r`/`i`/`z`/`y`)
+- Non-détections représentées par des flèches ▼ à la limite 3σ
+- Titre avec `diaObjectId`, bandes présentes et date de la dernière alerte
+- Lien cliquable vers le portail Fink/LSST pour chaque objet
+- Tableau récapitulatif (bandes, MJD, flux max, dernier filtre)
+- Sauvegarde automatique PDF + PNG dans `lightcurves/`
+
+**Endpoints :** `/api/v1/tags` · `/api/v1/sources`
+
+---
+
+### 🌌 `fink_lsst_alert_summary.ipynb` — Résumé par objet (LC + cutouts)
+Génère une **figure de synthèse par objet** pour un tag donné, combinant courbe de
+lumière et cutouts d'imagerie.
+
+- Courbe de lumière en flux PSF (nJy)
+- Courbe de lumière en magnitude AB
+- Cutouts Science / Template / Difference de la dernière alerte
+- Titre avec `diaObjectId`, `diaSourceId`, filtre et date
+
+**Endpoints :** `/api/v1/tags` · `/api/v1/sources` · `/api/v1/cutouts`
+
+---
+
 
 ### 👻 `fink_lsst_hostless.ipynb` — Objets sans galaxie hôte
 Explore les alertes taguées **`hostless_candidate`**, sélectionnées par l'algorithme ELEPHANT
@@ -161,18 +192,6 @@ comparative.
 
 ---
 
-### 🌌 `fink_lsst_alert_summary.ipynb` — Résumé par objet (LC + cutouts)
-Génère une **figure de synthèse par objet** pour un tag donné, combinant courbe de
-lumière et cutouts d'imagerie.
-
-- Courbe de lumière en flux PSF (nJy)
-- Courbe de lumière en magnitude AB
-- Cutouts Science / Template / Difference de la dernière alerte
-- Titre avec `diaObjectId`, `diaSourceId`, filtre et date
-
-**Endpoints :** `/api/v1/tags` · `/api/v1/sources` · `/api/v1/cutouts`
-
----
 
 ### 📡 `fink_lsst_forced_photometry.ipynb` — Photométrie forcée
 Exploite l'endpoint `/api/v1/fp` pour récupérer la **photométrie forcée** des objets
