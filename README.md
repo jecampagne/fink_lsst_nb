@@ -162,6 +162,25 @@ sexagésimales, ou résolu par nom d'objet (ex. `"NGC 1365"`) via l'API Fink.
 
 **Endpoints :** `/api/v1/conesearch` · `/api/v1/sources` · `/api/v1/cutouts` · `/api/v1/resolver`
 
+### 🔭 `fink_lsst_conesearch_nsources.ipynb` — Recherche par position avec filtrage qualité
+Extension de `fink_lsst_conesearch.ipynb` ajoutant un **filtrage par qualité** des objets
+et un seuil sur le nombre d'objets traités, utile pour les grands champs ou les requêtes
+à fort rayon.
+
+**Paramètres supplémentaires :**
+- `MIN_NUMBER_SOURCES` — exclut les objets avec moins de N alertes (`nDiaSources`)
+- `MAX_OBJECTS` — limite le nombre d'objets traités (évite les longues boucles)
+
+**Différences avec `fink_lsst_conesearch.ipynb` :**
+- La colonne `nDiaSources` est demandée à l'API et affichée dans le tableau de prévisualisation
+- Le filtrage `MIN_NUMBER_SOURCES` est appliqué avant la carte et les courbes de lumière
+- Les courbes de lumière adoptent le style **`fink_lsst_lightcurves_ddf`** :
+  panneaux flux (haut) et magnitude (bas) empilés, axe X partagé (`sharex`),
+  bandes dans l'ordre LSST `ugrizy`, fonction `fetch_lightcurve()` encapsulée
+- La boucle de tracé est limitée à `MAX_OBJECTS` objets
+
+**Endpoints :** `/api/v1/conesearch` · `/api/v1/sources` · `/api/v1/cutouts` · `/api/v1/resolver`
+
 ---
 
 ### 🌙 `fink_lsst_nightcurve.ipynb` — Suivi temporel nuit par nuit
