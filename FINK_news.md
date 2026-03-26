@@ -1,9 +1,9 @@
 
-![FINK and AI at work](./fig_news/alerte_demo.png)
+![FINK and AI at work](./fig_news/fink_IA_at_work.png)
 
-# Getting Started with FINK LSST Alerts: A Practical Guide Using LLMs
+# Exploring Fink API with IA for newcommers.
 
-The FINK broker now processes alerts from **Rubin/LSST**, in addition to the previously handled ZTF alerts. If you are familiar with the ZTF version of the broker, you’ll notice that the API has evolved and now requires some adjustments. Focusing on Rubin, for new newcomers, the [LSST FINK portal](https://lsst.fink-portal.org/) and its [API documentation](https://api.lsst.fink-portal.org/) can be overwhelming at first. Where to start?
+The FINK broker now processes alerts from **Rubin/LSST**, in addition to the previously handled ZTF alerts. If you are familiar with the ZTF version of the broker, you’ll notice that the API has evolved and now requires some adjustments. Focusing on Rubin, for newcomers, the [LSST FINK portal](https://lsst.fink-portal.org/) and its [API documentation](https://api.lsst.fink-portal.org/) can be overwhelming at first. Where to start?
 
 This news is **not a step-by-step tutorial**, but rather a practical approach using **free LLMs** (like [Claude Desktop](https://www.anthropic.com/claude), [Mistral AI](https://mistral.ai/), or [ChatGPT](https://chatgpt.com/)) to quickly get hands-on with **live alerts** (ie. we do not cover the use of downloaded data). The expectations and interactions with LLMs vary from person to person, but here’s some concrete examples using **Claude Desktop** to generate a Jupyter notebook for working with LSST alerts.
 
