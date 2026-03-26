@@ -40,7 +40,7 @@ Once the basics are working, you can refine your approach:
 
 This will produce plots like those available on the FINK portal:
 
-![Example output: Light curves and cutouts for a galaxy candidate](/Users/campagne/Desktop/FINK/alerte_demo.png)
+![Example output: Light curves and cutouts for a galaxy candidate](./fig_news/alerte_demo.png)
 *Example: Light curves (flux and AB magnitude) and cutouts.*
 
 ---
@@ -99,7 +99,7 @@ Want to go further? With Claude and Mistral, you can design a **JavaScript web a
 - Multi-tags – multiple FINK tags, each with its own color
 - Click on a point → popup with alert details
 
-![Example web app: FINK LSST Alert Sky Browser](/Users/campagne/Desktop/FINK/skymap_aldin_fink.png)
+![Example web app: FINK LSST Alert Sky Browser](./fig_news/skymap_aldin_fink.png)
 *Alert Sky Browser: Filter by tag, view spatial distribution, and access light curves/cutouts interactively.*
 
 ---
