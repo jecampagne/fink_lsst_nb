@@ -1,7 +1,7 @@
 
 ![FINK and AI at work](./fig_news/fink_IA_at_work.png)
 
-# Exploring Fink API with IA for newcommers.
+# Exploring Fink API with LLM for newcommers
 
 The FINK broker now processes alerts from **Rubin/LSST**, in addition to the previously handled ZTF alerts. If you are familiar with the ZTF version of the broker, you’ll notice that the API has evolved and now requires some adjustments. Focusing on Rubin, for newcomers, the [LSST FINK portal](https://lsst.fink-portal.org/) and its [API documentation](https://api.lsst.fink-portal.org/) can be overwhelming at first. Where to start?
 
