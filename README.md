@@ -11,7 +11,7 @@ ainsi qu'une collection de notebooks Jupyter pour explorer ces alertes.
 
 **API base URL :** `https://api.lsst.fink-portal.org`
 
-**Pour ZTF (non couvert ici) :** https://api.ztf.fink-portal.org`
+**Pour ZTF portal (non couvert ici) :** `https://ztf.fink-portal.org/`
 
 ---
 ## Web application
