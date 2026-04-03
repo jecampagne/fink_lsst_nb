@@ -45,9 +45,10 @@ construite sur [Aladin Lite v3](https://aladin.cds.unistra.fr/AladinLite/).
 Cree un fichier json à partir des schemas de diffrents endpoints de l'API V1 en cours, ex. `all_schema_api_v1_20260403.json` 
 
 ### `Fink_schema_inspector.ipynb`
-Permet de chercher dans all_schema JSON  des patterns dans les variables. 
+Permet de chercher dans all_schema JSON  des patterns dans les variables/endpoint et/ou la documentation
+
 Par exemple
-`print_df(search(df, tag="detec"),nrows=None)` donne avec l'API V1 
+`print_df(search(df, tag="detec", columns="end"),nrows=None)` donne avec l'API V1 
 
 |     | endpoint/var          | doc                                                                                                                                  |
 |----:|:----------------------|:-------------------------------------------------------------------------------------------------------------------------------------|
