@@ -39,6 +39,22 @@ construite sur [Aladin Lite v3](https://aladin.cds.unistra.fr/AladinLite/).
 
 ## 📋 Notebooks
 
+### `FINK_schema_dump.ipynb`  
+Cree un fichier json à partir des schemas de diffrents endpoints de l'API V1 en cours, ex. `all_schema_api_v1_20260403.json` 
+
+### `Fink_schema_inspector.ipynb`
+Permet de chercher dans all_schema JSON  des patterns dans les variables. 
+Par exemple
+`print_df(search(df, tag="detec"),nrows=None)` donne avec l'API V1 
+
+|     | endpoint/var          | doc                                                                                                                                  |
+|----:|:----------------------|:-------------------------------------------------------------------------------------------------------------------------------------|
+|  31 | tags/r:detector       | Id of the detector where this diaSource was measured. Datatype short instead of byte because of DB concerns about unsigned bytes.    |
+| 163 | conesearch/r:detector | Id of the detector where this diaSource was measured. Datatype short instead of byte because of DB concerns about unsigned bytes.    |
+| 468 | sources/r:detector    | Id of the detector where this diaSource was measured. Datatype short instead of byte because of DB concerns about unsigned bytes.    |
+| 593 | fp/r:detector         | Id of the detector where this forcedSource was measured. Datatype short instead of byte because of DB concerns about unsigned bytes. |
+
+
 ### 🌍 `fink_lsst_skymap.ipynb` — Carte céleste statique (Mollweide + 3D)
 Affiche la **distribution spatiale** des alertes d'un tag donné sur une projection
 de Mollweide matplotlib, avec une vue 3D interactive Plotly en bonus.
