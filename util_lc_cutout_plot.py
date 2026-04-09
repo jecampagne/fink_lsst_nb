@@ -69,11 +69,14 @@ def _prepare_lc(df):
     df['date'] = pd.to_datetime(date_strings, errors='coerce')
     return df
 
-def _apply_date_axis(ax):
+def _apply_date_axis(ax,show_xlabel=True):
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha='right')
     ax.grid(True, alpha=0.2, linewidth=0.5)
+    if show_xlabel:
+        ax.set_xlabel("Date (UTC)")
+
 
 def _add_window_band(ax, mjd_start, mjd_end, df):
     """Ajoute une bande verticale semi-transparente pour la fenêtre [START, END]."""
@@ -99,7 +102,7 @@ def _add_window_band(ax, mjd_start, mjd_end, df):
     ax.axvspan(xmin, xmax, alpha=0.07, color='royalblue')
 
 
-def plot_flux_mjy(ax, df, obj_id, mjd_start=None, mjd_end=None):
+def plot_flux_mjy(ax, df, obj_id=None, mjd_start=None, mjd_end=None):
     """Courbe de lumière en flux PSF (mJy)."""
     required = {'midpointMjdTai', 'psfFlux', 'psfFluxErr', 'band'}
     if not required.issubset(df.columns):
@@ -134,7 +137,7 @@ def plot_flux_mjy(ax, df, obj_id, mjd_start=None, mjd_end=None):
     _apply_date_axis(ax)
 
 
-def plot_mag_ab(ax, df, obj_id, mjd_start=None, mjd_end=None):
+def plot_mag_ab(ax, df, obj_id=None, mjd_start=None, mjd_end=None):
     """Courbe de lumière en magnitude AB."""
     required = {'midpointMjdTai', 'psfFlux', 'psfFluxErr', 'band'}
     if not required.issubset(df.columns):
