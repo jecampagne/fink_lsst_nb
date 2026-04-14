@@ -54,4 +54,28 @@ def mjd_tai_to_datestr_iso_utc(mjd_tai):
     # Conversion en UTC et format ISO
     return time_obj.utc.iso
 
+def mjd_tai_to_datestr_iso(mjd_tai, subformat='date'):
+    """
+    Convertit une date MJD/TAI en chaîne ISO.
+
+    Args:
+        mjd_tai (float): Date en MJD/TAI.
+        subformat : string or None (change the output format)
+
+    Returns:
+        str: Chaîne de date au format
+        subformat = None =>  'YYYY-MM-DD HH:MM:S.S'
+                  = 'date' => 'YYYY-MM-DD', et aussi 'date_hm', 'date_hms' <=> None 
+                  
+    """
+    if mjd_tai is None:
+        return None
+
+    # Conversion de MJD/TAI en objet Time avec scale='tai'
+    time_obj = Time(mjd_tai, format='mjd', scale='tai')
+
+    # Conversion au format ISO
+    return time_obj.to_value(format='iso',subfmt=subformat)
+
+
 print("Fonctions de date OK ✓")
